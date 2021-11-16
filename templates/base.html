@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <title>ODE Solver - {% block title %}Home{% endblock %}</title>
+</head>
+<body>
+  <nav>
+    <ul>
+      <li><a {%if page == "home" %}class="active" {% endif %} href="/">Main</a></li>
+      <li><a {%if page == "" %}class="active" {% endif %} href="/">Numerical Methods</a></li>
+      <li><a {%if page == "" %}class="active" {% endif %} href="/">Something else?</a></li>
+      <li><a id="about" {%if page == "" %}class="active" {% endif %} href="/" style="float: right;">About</a></li>
+    </ul>
+  </nav>
+</header>
+
+<div class="main">
+  <h2>Graphical ODE Solver</h2>
+<form method="post">
+      <label for="order">Order of your ODE n =</label>
+      <input name="order" id="order" {% if request.form['order'] is defined %} value="{{ request.form['order'] }}" {% endif %} required>
+      <br><br>
+      <label for="initials">Initial conditions y(0), y'(0),...:</label>
+      <input name="initials" id="initials" {% if request.form['initials'] is defined %} value="{{ request.form['initials'] }}" {% endif %} required>
+      <br><br>
+      <label for="ode">d^ny/dt^n =</label>
+      <input name="ode" ide="ode" {% if request.form['ode'] is defined %} value="{{ request.form['ode'] }}" {% endif %} required>
+      <br><br>
+      <label for="ti">Initial time to view:</label>
+      <input name="ti" ide="ti" {% if request.form['ti'] is defined %} value="{{ request.form['ti'] }}" {% endif %} required>
+      <br><br>
+      <label for="tf">Final time to view:</label>
+      <input name="tf" ide="tf" {% if request.form['tf'] is defined %} value="{{ request.form['tf'] }}" {% endif %} required
+      >
+      <input type="submit" value="Find solution">
+  </form>
+
+<div id='chart' class='chart'></div>
+
+</div>
+
+<script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+<script type='text/javascript'>
+  var graphs = {{graphJSON | safe}};
+  Plotly.plot('chart',graphs,{});
+</script>
+
+
+</body>
+</html>

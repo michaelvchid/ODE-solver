@@ -42,13 +42,13 @@
       <input name="initials" id="initials" {% if request.form['initials'] is defined %} value="{{ request.form['initials'] }}" {% endif %} required>
       <br><br>
       <label for="ode">\( \frac{d^{n}y}{dt^{n}}\) = </label>
-      <input name="ode" ide="ode" {% if request.form['ode'] is defined %} value="{{ request.form['ode'] }}" {% endif %} required>
+      <input name="ode" id="ode" {% if request.form['ode'] is defined %} value="{{ request.form['ode'] }}" {% endif %} required>
       <br><br>
       <label for="ti">Initial time to view:</label>
-      <input name="ti" ide="ti" {% if request.form['ti'] is defined %} value="{{ request.form['ti'] }}" {% endif %} required>
+      <input name="ti" id="ti" {% if request.form['ti'] is defined %} value="{{ request.form['ti'] }}" {% endif %} required>
       <br><br>
       <label for="tf">Final time to view:</label>
-      <input name="tf" ide="tf" {% if request.form['tf'] is defined %} value="{{ request.form['tf'] }}" {% endif %} required
+      <input name="tf" id="tf" {% if request.form['tf'] is defined %} value="{{ request.form['tf'] }}" {% endif %} required
       >
       <input type="submit" value="Find solution">
   </form>

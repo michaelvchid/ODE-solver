@@ -142,7 +142,7 @@ def Euler(f, y0, step, t1):
     Input: y0  : string initial value
     Input: step: string step size
     Input: t1  : string final view time
-    Output: t,y: array of time and solution
+    Output: t,y array of time and solution
     """
     f_new = lambda y,t : eval(manip_expression(f))
     y0_new = eval(manip_expression(y0))
@@ -152,7 +152,7 @@ def Euler(f, y0, step, t1):
     y = np.zeros(len(t))
     y[0] = y0_new
     for n in range(0, len(t)-1):
-        y[n+1] = y[n]+f_new(y[n],1/step_new * n) * step_new
+        y[n+1] = y[n]+f_new(y[n],step_new * n) * step_new
     
     fig = px.line(x=t, y=y,title="Approximation With Euler's Method", width=800, height=500)
     #fig.update_layout({
@@ -161,5 +161,71 @@ def Euler(f, y0, step, t1):
     #})
     return t, y, fig
 
+
+def Heun(f, y0, step, t1):
+    """
+    Input: f   : string (dy/dt = f)
+    Input: y0  : string initial value
+    Input: step: string step size
+    Input: t1  : string final view time
+    Output: t,y array of time and solution
+    """
+    f_new = lambda y,t : eval(manip_expression(f))
+    y0_new = eval(manip_expression(y0))
+    step_new = eval(manip_expression(step))
+    t1_new = eval(manip_expression(t1))
+    t = np.linspace(0, t1_new, int((t1_new)/step_new+1), endpoint=True)
+    y = np.zeros(len(t))
+    y_est = np.zeros(len(t))
+    
+    y[0] = y0_new
+    #y_est[0]=y0_new
+    for n in range(0, len(t)-1):
+        y_est[n+1] = y[n]+f_new(y[n],step_new * n) * step_new
+        y[n+1]     = y[n]+1/2*(f_new(y[n],step_new * n)+f_new(y_est[n+1],step_new * (n+1))) * step_new
+                               
+    fig = px.line(x=t, y=y,title="Approximation With Euler's Method", width=800, height=500)
+    #fig.update_layout({
+    #"plot_bgcolor":"rgba(85,100,125,0.4)",
+    #"paper_bgcolor":"rgba(255,255,255,1)"
+    #})
+    return t, y, fig
+
+
+def RungeKutta4th(f, y0, step, t1):
+    """
+    Input: f   : string (dy/dt = f)
+    Input: y0  : string initial value
+    Input: step: string step size
+    Input: t1  : string final view time
+    Output: t,y array of time and solution
+    """
+    f_new = lambda y,t : eval(manip_expression(f))
+    y0_new = eval(manip_expression(y0))
+    step_new = eval(manip_expression(step))
+    t1_new = eval(manip_expression(t1))
+    t = np.linspace(0, t1_new, int((t1_new)/step_new+1), endpoint=True)
+    y = np.zeros(len(t))
+    
+    k1 = np.zeros(len(t))
+    k2 = np.zeros(len(t))
+    k3 = np.zeros(len(t))
+    k4 = np.zeros(len(t))
+    
+    y[0] = y0_new
+    for n in range(0, len(t)-1):
+        k1[n] = f_new(y[n],              step_new * n        ) * step_new
+        k2[n] = f_new(y[n] + 1/2 * k1[n],step_new * (n + 1/2)) * step_new
+        k3[n] = f_new(y[n] + 1/2 * k2[n],step_new * (n + 1/2)) * step_new
+        k4[n] = f_new(y[n] +   1 * k3[n],step_new * (n + 1  )) * step_new
+        
+        y[n+1] = y[n] + 1/6 *(k1[n]+2*k2[n]+2*k3[n]+k4[n])
+                               
+    fig = px.line(x=t, y=y,title="Approximation With Euler's Method", width=800, height=500)
+    #fig.update_layout({
+    #"plot_bgcolor":"rgba(85,100,125,0.4)",
+    #"paper_bgcolor":"rgba(255,255,255,1)"
+    #})
+    return t, y, fig
 
 

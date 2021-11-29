@@ -1,5 +1,5 @@
 from flask import Flask, render_template, g, request, flash
-from py.ODEs import solve_ODE, is_num, Euler
+from py.ODEs import solve_ODE, is_num, Euler, Heun, RungeKutta4th
 import json
 import plotly
 from plotly import express as px
@@ -89,27 +89,37 @@ def methods():
 			error = True
 			flash("Please enter numerical step value.")
 
+		fig = 0
 		if(error == False):
 			# instead of checking whether or not the inputted function was valid,
 			# we use try/except. If the given function was invalid, then
 			# solve_ODE() will throw an error
 			try:
+
 				t1, y1, fig1 = solve_ODE("1", initial, f, "0", tf)
-				t2 ,y2, fig2 = Euler(f, initial, step, tf)
-				fig=px.scatter(x=t2, y=y2, title="Approximation with Euler's Method")
-				fig.update_traces(marker={"size":8}, mode="markers+lines", showlegend=True, name="Approximation")
-				fig.add_scatter(x=t1, y=y1,mode='lines', name="Solution")
-				graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+				fig=px.scatter(x=t1, y=y1, title="Approximating the Solution of dy/dt = f(t,y)")
+				fig.update_traces(mode="lines", showlegend=True, name="Solution", line={"color":px.colors.qualitative.Plotly[0]})
 			except:
 				error = True
 				flash("Please enter a valid equation for your differential equation.")
 
-		# final check to see if we can create a valid plot
+		# final check to see if we can create a valid plot and add all num. methods
 		if(error == False):
+			if(request.form.get("euler")):
+				t2 ,y2, fig2 = Euler(f, initial, step, tf)
+				fig.add_scatter(x=t2, y=y2,mode='markers+lines', name="Euler's Method", line={"color":px.colors.qualitative.Plotly[1]})
+			if(request.form.get("heun")):
+				t3 ,y3, fig3 = Heun(f, initial, step, tf)
+				fig.add_scatter(x=t3, y=y3,mode='markers+lines', name="Heun's Method", line={"color":px.colors.qualitative.Plotly[2]})
+			if(request.form.get("rungekutta")):
+				t4 ,y4, fig4 = RungeKutta4th(f, initial, step, tf)
+				fig.add_scatter(x=t4, y=y4,mode='markers+lines', name="Runge-Kutta 4th Order Method", line={"color":px.colors.qualitative.Plotly[3]})
+			graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 			return render_template("methods.html", page="methods", graphJSON=graphJSON)
-		else: 
+		else:
 			return render_template("methods.html", page="methods")
-		
+
+
 	else: #GET method
 		flash("Please enter the info for the differential equation you want to approximate.")
 		return render_template("methods.html", page="methods")

@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Methods{% endblock %}
+
+<div class="main">
+{% block content %}
+
+<h2>Graphical ODE Solver - Numerical Methods</h2>
+  <div class="error_msgs">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for msg in messages %}
+          <p>{{msg}}</p>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <form method="post">
+      <label for="f_euler">\( \frac{dy}{dt}\) = </label>
+      <input name="f_euler" ide="f_euler" {% if request.form['f_euler'] is defined %} value="{{ request.form['f_euler'] }}" {% endif %} required>
+      <br><br>
+      <label for="initial_euler">Initial condition \(y(0) = \)</label>
+      <input name="initial_euler" id="initial_euler" {% if request.form['initial_euler'] is defined %} value="{{ request.form['initial_euler'] }}" {% endif %} required>
+      <br><br>
+      <label for="step_euler">Step size:</label>
+      <input name="step_euler" id="step_euler" {% if request.form['step_euler'] is defined %} value="{{ request.form['step_euler'] }}" {% endif %} required>
+      <br><br>
+      <label for="tf_euler">Final time to view:</label>
+      <input name="tf_euler" ide="tf_euler" {% if request.form['tf_euler'] is defined %} value="{{ request.form['tf_euler'] }}" {% endif %} required
+      >
+      <input type="submit" value="Approximate Solution">
+  </form>
+
+<div id='chart' class='chart'></div>
+
+{% endblock %}
+</div>
+
+<!-- Used to produce the plotly graph --> 
+<script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+<script type='text/javascript'>
+  var graphs = {{graphJSON | safe}};
+  Plotly.plot('chart',graphs,{});
+</script>

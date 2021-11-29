@@ -69,54 +69,35 @@ def manip_expression(string):
     string = string.replace("log", "np.log")
     string = string.replace("ln", "np.log")
     string = string.replace("sqrt", "np.sqrt")
-    string = replace_y(string)
 
     return string
 
-
-def solve_ODE():
-    # ask for inputs
-    n = int(input("What is the order of your differential equation?"))
-    y0_raw = input("What are your initial conditions y(0), y'(0),... separated by commas")
-    
-    # split up initial conditions into an array
-    y0 = y0_raw.split(",")
-    # make y0 elements into numbers
-    for num in range(len(y0)):
-        y0[num] = eval(manip_expression(y0[num]))
-    
-    # ask for the ODE
-    dydtn = input(f"What is d^{n}y/dt^{n} = ")
-    # get time interval and turn into floats
-    t_raw = input("What time interval do you want to view? Format as t1:t2")
-    t0 = float(t_raw.split(":")[0])
-    t1 = float(t_raw.split(":")[1])
-    
-    # defines our model
-    def model(y,t):
-        dydt = []
-        for i in range(n-1):
-            dydt.append(y[i+1])
-        dydt.append(eval(manip_expression(dydtn)))
-        return dydt          
-    
-    # create solution
-    t = np.linspace(t0,t1,1000)
-    sol = odeint(model, y0, t)[:,0]
-    
-    # plot the solution
-    fig = plt.plot(t, sol)
-    plt.xlabel("t", fontsize=12)
-    plt.ylabel("y(t)", fontsize=12)
-    plt.title("Solution y(t) of the ODE")
-    plt.grid()
-    return sol, t, fig
-
-
-def solve_ODE2(order, initials, ode, ti, tf):
+def is_num(string):
     """
-    Same as solve_ODE(), but has function inputs
-    instead of run-time user inputs
+    Input: string (mathematical expression)
+    Output: bool
+    
+    Takes in an expression and determines if it is a number.
+    """
+    # must use try/except. If string isn't valid, eval throws and EOF parsing error.
+    try:
+        if(type(eval(manip_expression(string))) == int or
+          type(eval(manip_expression(string))) == float):
+            return True
+        else:
+            return False
+    except:
+        return False
+
+
+
+def solve_ODE(order, initials, ode, ti, tf):
+    """
+    Inputs: string
+    Outputs: np array, np array, px figure
+    Uses scipy.odeint to solve the differential equation ode
+    of order 'order', initial conditions 'initials', and
+    starting and end times ti, tf
     """
     # ask for inputs
     n = int(order)
@@ -139,49 +120,46 @@ def solve_ODE2(order, initials, ode, ti, tf):
         dydt = []
         for i in range(n-1):
             dydt.append(y[i+1])
-        dydt.append(eval(manip_expression(dydtn)))
+        dydt.append(eval(replace_y(manip_expression(dydtn))))
+        #dydt.append(eval(manip_expression(dydtn, True)))
         return dydt          
     
     # create solution
     t = np.linspace(t0,t1,2000)
     sol = odeint(model, y0, t)[:,0]
     
-    # # plot the solution
-    # fig = plt.plot(t, sol)
-    # plt.xlabel("t", fontsize=12)
-    # plt.ylabel("y(t)", fontsize=12)
-    # plt.title("Solution y(t) of the ODE")
-    # plt.grid()
+    fig = px.line(x=t, y=sol ,title="Solution y(t) of the ODE", width=800, height=500)
+    #fig.update_layout({
+    #"plot_bgcolor":"rgba(85,100,125,0.4)",
+    #"paper_bgcolor":"rgba(255,255,255,1)"
+    #})
+    return t, sol, fig
+
+
+def Euler(f, y0, step, t1):
+    """
+    Input: f   : string (dy/dt = f)
+    Input: y0  : string initial value
+    Input: step: string step size
+    Input: t1  : string final view time
+    Output: t,y: array of time and solution
+    """
+    f_new = lambda y,t : eval(manip_expression(f))
+    y0_new = eval(manip_expression(y0))
+    step_new = eval(manip_expression(step))
+    t1_new = eval(manip_expression(t1))
+    t = np.linspace(0, t1_new, int((t1_new)/step_new+1), endpoint=True)
+    y = np.zeros(len(t))
+    y[0] = y0_new
+    for n in range(0, len(t)-1):
+        y[n+1] = y[n]+f_new(y[n],1/step_new * n) * step_new
     
-    df = pd.DataFrame({"t":t, "y(t)":sol})
-    fig = px.line(df, x="t", y="y(t)",title="Solution y(t) of the ODE", width=800, height=500)
-    fig.update_layout({
-    "plot_bgcolor":"rgba(85,100,125,0.4)",
-    "paper_bgcolor":"rgba(255,255,255,1)"
-})
-    return sol, t, fig
-
-
-# _,_, fig2 = solve_ODE2("2", "1,1", "-y-y'", "0","10")
-
-
-
-# fig2.show()
-
-
-# ## Testing
-
-# sol, t = solve_ODE()
-
-
-
-
-# df = pd.DataFrame({"t":t, "y(t)":sol})
-# fig = px.line(df, x="t", y="y(t)",title="Solution y(t) of the ODE", width=800, height=500)
-# fig
-
-
-# fig.show()
+    fig = px.line(x=t, y=y,title="Approximation With Euler's Method", width=800, height=500)
+    #fig.update_layout({
+    #"plot_bgcolor":"rgba(85,100,125,0.4)",
+    #"paper_bgcolor":"rgba(255,255,255,1)"
+    #})
+    return t, y, fig
 
 
 

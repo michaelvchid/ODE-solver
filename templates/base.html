@@ -3,29 +3,45 @@
 <head>
   <meta charset="utf-8">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
   <title>ODE Solver - {% block title %}Home{% endblock %}</title>
 </head>
 <body>
   <nav>
     <ul>
       <li><a {%if page == "home" %}class="active" {% endif %} href="/">Main</a></li>
-      <li><a {%if page == "" %}class="active" {% endif %} href="/">Numerical Methods</a></li>
-      <li><a {%if page == "" %}class="active" {% endif %} href="/">Something else?</a></li>
+      <li><a {%if page == "methods" %}class="active" {% endif %} href="/methods">Numerical Methods</a></li>
+      <li><a {%if page == "" %}class="active" {% endif %} href="/">Something else</a></li>
       <li><a id="about" {%if page == "" %}class="active" {% endif %} href="/" style="float: right;">About</a></li>
     </ul>
   </nav>
 </header>
 
 <div class="main">
+  {% block content %}
+
   <h2>Graphical ODE Solver</h2>
+  <div class="error_msgs">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for msg in messages %}
+          <p>{{msg}}</p>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
 <form method="post">
-      <label for="order">Order of your ODE n =</label>
+      <label for="order">Order of your ODE \(n\) =</label>
       <input name="order" id="order" {% if request.form['order'] is defined %} value="{{ request.form['order'] }}" {% endif %} required>
       <br><br>
-      <label for="initials">Initial conditions y(0), y'(0),...:</label>
+      <label for="initials">Initial conditions \(y(0), y'(0), y''(0), ...\):</label>
       <input name="initials" id="initials" {% if request.form['initials'] is defined %} value="{{ request.form['initials'] }}" {% endif %} required>
       <br><br>
-      <label for="ode">d^ny/dt^n =</label>
+      <label for="ode">\( \frac{d^{n}y}{dt^{n}}\) = </label>
       <input name="ode" ide="ode" {% if request.form['ode'] is defined %} value="{{ request.form['ode'] }}" {% endif %} required>
       <br><br>
       <label for="ti">Initial time to view:</label>
@@ -39,14 +55,15 @@
 
 <div id='chart' class='chart'></div>
 
+{% endblock %}
 </div>
 
+<!-- Used to produce the plotly graph --> 
 <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
 <script type='text/javascript'>
   var graphs = {{graphJSON | safe}};
   Plotly.plot('chart',graphs,{});
 </script>
-
 
 </body>
 </html>

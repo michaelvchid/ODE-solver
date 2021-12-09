@@ -13,3 +13,5 @@ Next, open up the Anaconda Prompt and `cd` into the directory of the downloaded 
 Now that you are currently in the proper directory, enter on Anaconda Prompt `set FLASK_ENV=development`. The console shouldn't print anything out. 
 
 Lastly, enter `flask run`. After loading everything, the console will print out `Running on http://127.0.0.1:5000/`, or have a different address. Copy the address and past it into your favorite web browser. Then, you should be able to view the webapp and interact with it!
+
+For further instructions on how to use the ODE solver, consult the "About" page on the webapp. 

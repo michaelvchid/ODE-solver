@@ -5,7 +5,6 @@ from scipy.integrate import odeint
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-import seaborn as sns
 from plotly import express as px
 
 
@@ -24,10 +23,11 @@ def replace_y(string):
     if(len(string)==0):
         return ""
     
+    # find the position of the first y and count the number of 's after it
     index = string.find('y')
     count = 0
     
-    # will end once we finish the string since find returns -1 if not found
+    # will end once we finish the string since find() returns -1 if not found
     if(index>=0):
         new_string = string[0:index]
         # count ' directly after a "y"
@@ -37,10 +37,11 @@ def replace_y(string):
             else:
                 break
         
+        # replace y'' with y[2], for example:
         concat = f"y[{count}]"
         new_string = new_string + concat + replace_y(string[index+count+1:])
     
-    # no "y" left in string
+    # no "y" in string
     else:
         new_string = string
     return new_string
@@ -56,6 +57,7 @@ def manip_expression(string):
     their useful numpy function/constant.
     """
     
+    # simply replace all user-typical inputs to their useful numpy form.
     string = string.replace("^","**")
     string = string.replace("sin","np.sin")
     string = string.replace("cos", "np.cos")
@@ -78,16 +80,35 @@ def is_num(string):
     Output: bool
     
     Takes in an expression and determines if it is a number.
+    Used to determine if inputs like "2*pi" are valid numbers.
     """
-    # must use try/except. If string isn't valid, eval throws and EOF parsing error.
+
+    # must use try/except. If string isn't valid, eval throws an EOF parsing error.
     try:
         if(type(eval(manip_expression(string))) == int or
           type(eval(manip_expression(string))) == float):
             return True
-        else:
-            return False
     except:
-        return False
+        pass
+    return False
+
+def is_positive(string):
+    """
+    Input: string (mathematical expression)
+    Output: bool
+
+    Takes in an expression and determines if it is positive (as well if it is even a number)
+    """
+
+    # check if the inputted string was an int or float, and if so, determine if positive
+    try:
+        if(type(eval(manip_expression(string))) == int or
+          type(eval(manip_expression(string))) == float):
+            if(eval(manip_expression(string))>0):
+                return True
+    except:
+        pass
+    return False
 
 
 
@@ -99,29 +120,30 @@ def solve_ODE(order, initials, ode, ti, tf):
     of order 'order', initial conditions 'initials', and
     starting and end times ti, tf
     """
-    # ask for inputs
+    # get inputs. We assume inputs are valid (order="3") would work.
     n = int(order)
     y0_raw = initials
     
     # split up initial conditions into an array
     y0 = y0_raw.split(",")
+
     # make y0 elements into numbers
     for num in range(len(y0)):
         y0[num] = eval(manip_expression(y0[num]))
     
-    # ask for the ODE
+    # get the ODE
     dydtn = ode
 
-    t0 = float(ti)
-    t1 = float(tf)
+    t0 = eval(manip_expression(ti))
+    t1 = eval(manip_expression(tf))
     
     # defines our model
+    # turns an nth order ODE into a system of n 1st order ODES
     def model(y,t):
         dydt = []
         for i in range(n-1):
             dydt.append(y[i+1])
         dydt.append(eval(replace_y(manip_expression(dydtn))))
-        #dydt.append(eval(manip_expression(dydtn, True)))
         return dydt          
     
     # create solution
@@ -129,12 +151,33 @@ def solve_ODE(order, initials, ode, ti, tf):
     sol = odeint(model, y0, t)[:,0]
     
     fig = px.line(x=t, y=sol ,title="Solution y(t) of the ODE", width=800, height=500)
+    # to change background color of plot:
     #fig.update_layout({
     #"plot_bgcolor":"rgba(85,100,125,0.4)",
     #"paper_bgcolor":"rgba(255,255,255,1)"
     #})
     return t, sol, fig
 
+def manip_NM_inputs(f, y0, step, t1):
+    """
+    Input: f   : string (dy/dt = f)
+    Input: y0  : string initial value
+    Input: step: string step size
+    Input: t1  : string final view time
+    Output: tuple of numpy-readable numbers and arrays
+    """
+
+    # turn all inputs into something numpy can handle
+    f_new = lambda y,t : eval(manip_expression(f))
+    y0_new = eval(manip_expression(y0))
+    step_new = eval(manip_expression(step))
+    t1_new = eval(manip_expression(t1))
+
+    # Create times of evaluation and array for solution to live in
+    t = np.linspace(0, t1_new, int((t1_new)/step_new+1), endpoint=True)
+    y = np.zeros(len(t))
+
+    return f_new, y0_new, step_new, t1_new, t, y
 
 def Euler(f, y0, step, t1):
     """
@@ -144,21 +187,16 @@ def Euler(f, y0, step, t1):
     Input: t1  : string final view time
     Output: t,y array of time and solution
     """
-    f_new = lambda y,t : eval(manip_expression(f))
-    y0_new = eval(manip_expression(y0))
-    step_new = eval(manip_expression(step))
-    t1_new = eval(manip_expression(t1))
-    t = np.linspace(0, t1_new, int((t1_new)/step_new+1), endpoint=True)
-    y = np.zeros(len(t))
+
+    # turn all inputs into something numpy can handle
+    f_new, y0_new, step_new, t1_new, t, y = manip_NM_inputs(f, y0, step, t1)
+
+    # Use Euler's method:
     y[0] = y0_new
     for n in range(0, len(t)-1):
         y[n+1] = y[n]+f_new(y[n],step_new * n) * step_new
     
     fig = px.line(x=t, y=y,title="Approximation With Euler's Method", width=800, height=500)
-    #fig.update_layout({
-    #"plot_bgcolor":"rgba(85,100,125,0.4)",
-    #"paper_bgcolor":"rgba(255,255,255,1)"
-    #})
     return t, y, fig
 
 
@@ -170,25 +208,19 @@ def Heun(f, y0, step, t1):
     Input: t1  : string final view time
     Output: t,y array of time and solution
     """
-    f_new = lambda y,t : eval(manip_expression(f))
-    y0_new = eval(manip_expression(y0))
-    step_new = eval(manip_expression(step))
-    t1_new = eval(manip_expression(t1))
-    t = np.linspace(0, t1_new, int((t1_new)/step_new+1), endpoint=True)
-    y = np.zeros(len(t))
+    # turn all inputs into something numpy can handle
+    f_new, y0_new, step_new, t1_new, t, y = manip_NM_inputs(f, y0, step, t1)
+
+    # used to hold estimates from middle step of Heun's method
     y_est = np.zeros(len(t))
     
     y[0] = y0_new
-    #y_est[0]=y0_new
     for n in range(0, len(t)-1):
         y_est[n+1] = y[n]+f_new(y[n],step_new * n) * step_new
         y[n+1]     = y[n]+1/2*(f_new(y[n],step_new * n)+f_new(y_est[n+1],step_new * (n+1))) * step_new
                                
     fig = px.line(x=t, y=y,title="Approximation With Euler's Method", width=800, height=500)
-    #fig.update_layout({
-    #"plot_bgcolor":"rgba(85,100,125,0.4)",
-    #"paper_bgcolor":"rgba(255,255,255,1)"
-    #})
+
     return t, y, fig
 
 
@@ -200,18 +232,16 @@ def RungeKutta4th(f, y0, step, t1):
     Input: t1  : string final view time
     Output: t,y array of time and solution
     """
-    f_new = lambda y,t : eval(manip_expression(f))
-    y0_new = eval(manip_expression(y0))
-    step_new = eval(manip_expression(step))
-    t1_new = eval(manip_expression(t1))
-    t = np.linspace(0, t1_new, int((t1_new)/step_new+1), endpoint=True)
-    y = np.zeros(len(t))
+    # turn all inputs into something numpy can handle
+    f_new, y0_new, step_new, t1_new, t, y = manip_NM_inputs(f, y0, step, t1)
     
+    # used for intermediate steps in RK4th method
     k1 = np.zeros(len(t))
     k2 = np.zeros(len(t))
     k3 = np.zeros(len(t))
     k4 = np.zeros(len(t))
     
+    # RK4th method:
     y[0] = y0_new
     for n in range(0, len(t)-1):
         k1[n] = f_new(y[n],              step_new * n        ) * step_new
@@ -222,10 +252,7 @@ def RungeKutta4th(f, y0, step, t1):
         y[n+1] = y[n] + 1/6 *(k1[n]+2*k2[n]+2*k3[n]+k4[n])
                                
     fig = px.line(x=t, y=y,title="Approximation With Euler's Method", width=800, height=500)
-    #fig.update_layout({
-    #"plot_bgcolor":"rgba(85,100,125,0.4)",
-    #"paper_bgcolor":"rgba(255,255,255,1)"
-    #})
+
     return t, y, fig
 
 

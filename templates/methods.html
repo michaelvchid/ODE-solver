@@ -6,15 +6,21 @@
 
 <h2>Graphical ODE Solver - Numerical Methods</h2>
   <div class="error_msgs">
+    <b>Note:</b>
+    <ul style="list-style-type: cirlce;">
+      <li>Always use * when multiplying, so that \(4*sin(y*t)\) is valid, but \(4sin(yt)\) is not.</li>
+      <li>Do not write the input of \(y\) or any of its derivatives. \(y+y''\) is valid, but \(y(t)+y''(t)\) is not.</li>
+      <li>If the graph does not show after clicking "Find solution" multiple times, refresh the page.</li>
+    </ul>
     {% with messages = get_flashed_messages() %}
       {% if messages %}
         {% for msg in messages %}
-          <p>{{msg}}</p>
+          <p style="color:red;">{{msg}}</p>
         {% endfor %}
       {% endif %}
     {% endwith %}
   </div>
-
+  <div id='chart' class='chart'></div>
   <form method="post">
     <h4>Select the numerical method(s) you wish to use.</h4>
       <input type="checkbox" id="euler" name="euler" value="Euler" {% if request.form.get("euler") %}checked="checked" {% endif %}>
@@ -35,13 +41,13 @@
       <label for="step_euler">Step size:</label>
       <input name="step_euler" id="step_euler" {% if request.form['step_euler'] is defined %} value="{{ request.form['step_euler'] }}" {% endif %} required>
       <br><br>
+        <p>Initial time to view: \(t_{0} = 0\)</p><br>
       <label for="tf_euler">Final time to view:</label>
       <input name="tf_euler" id="tf_euler" {% if request.form['tf_euler'] is defined %} value="{{ request.form['tf_euler'] }}" {% endif %} required
       >
       <input type="submit" value="Approximate Solution">
   </form>
 
-<div id='chart' class='chart'></div>
 
 {% endblock %}
 </div>
